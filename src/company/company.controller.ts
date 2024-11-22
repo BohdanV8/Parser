@@ -5,8 +5,10 @@ import { CompanyService } from './company.service';
 export class CompanyController {
     constructor(private readonly service: CompanyService){}
 
-    @Get('all')
-    public async getAllCompanies(){
-        await this.service.getAllCompanies()
+    @Get()
+    GetAllCompanies(): string{
+        let companies: string
+        this.service.getAllCompanies().then(data => companies = data)
+        return companies
     }
 }
