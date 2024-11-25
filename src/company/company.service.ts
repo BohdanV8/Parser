@@ -5,12 +5,23 @@ import puppeteer from 'puppeteer';
 export class CompanyService {
     async getCompanies(): Promise<string[]>{
 
-        const browser = await puppeteer.launch()
+        const browser = await puppeteer.launch(
+
+            //can't work for Andrii without that
+            // { headless: false }
+             
+        )
         const page = await browser.newPage()
-        let companies: string[]
+
+        let companies
 
         try {
             await page.goto('https://clutch.co/developers')
+            await page.goto('https://clutch.co/developers/ecommerce')
+            await page.setViewport({
+                 width: 1920,
+                height: 1080,
+            })
 
             console.log(await page.content());
 
@@ -20,15 +31,13 @@ export class CompanyService {
                 '.providers__list', 
                 list => list.map(elem => elem.innerHTML)
             )
-            console.log(companies)
 
         } catch (error){
             console.log('Error: ', error)
-            throw new Error('Failed to scrape')
         } finally{
             await browser.close()
             return companies
-        }
+         }
         
     }
 }
