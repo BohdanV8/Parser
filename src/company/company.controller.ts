@@ -6,9 +6,9 @@ export class CompanyController {
     constructor(private readonly service: CompanyService){}
 
     @Get()
-    GetAllCompanies(): string{
-        let companies: string
-        this.service.getAllCompanies().then(data => companies = data)
-        return companies
+    getCompany(){
+        // let res: string;
+        this.service.getCompanies().then(data => console.log(data))
+        // return res
     }
 }
