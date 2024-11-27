@@ -31,10 +31,10 @@ export class CompanyService {
 
                 const name = await page.evaluate(el => el.querySelector('h3 > a').innerHTML.trim(), company_item)
                 const link = await page.evaluate(el => el.querySelector('h3 > a').getAttribute('href').trim(), company_item)
-                const mark = await page.evaluate(el => el.querySelector(
-                    'div > div.provider__main-info.provider__main-info--new-verified > div > span'), company_item) 
-                    ? await page.evaluate(el => Number(el.querySelector(
-                        'div > div.provider__main-info.provider__main-info--new-verified > div > span').innerHTML.trim()), company_item) 
+                const mark = await page.evaluate(
+                    el => el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span'), 
+                    company_item) 
+                    ? await page.evaluate(el => Number(el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span').innerHTML.trim()), company_item) 
                     : 0
                 if(mark > 0 && mark < 4){
 
@@ -51,35 +51,10 @@ export class CompanyService {
                 }
             }
 
-
-            // companies = await page.evaluate(el=>el.innerHTML, )
-
-            // companies = await page.$$eval(
-            //     '.provider-list-item', 
-            //     list => list.map(elem => elem.innerHTML
-            //         // {
-            //         //     const name = elem.querySelector('.provider__title')
-            //         //     // console.log(elem.innerHTML)
-            //         //     return name
-            //         //     // const profile = elem.querySelector(".provider__title")
-            //         //     //     .getAttribute('href')
-            //         //     // const mark = elem.querySelector('.sg-rating sg-rating rating-reviews')
-            //         //     //     .innerHTML
-            //         //     // console.log('Name:', name, 'mark: ', mark, 'link to: ', profile)
-                        
-            //         //     // return `Name: ${name}
-            //         //     //         Mark: ${mark} 
-            //         //     //         Reviews on: ${profile}`
-            //         // }
-            //     )
-            // )
-
         } catch (error){
             console.log('Scrapping error: ', error)
         } finally{
             await browser.close()
-
-
             return companies
          }
         
