@@ -4,8 +4,6 @@ export default () => ({
     baseurl: 'https://clutch.co',
     dev: 'developers',
     ecom: 'ecommerce',
-    profile: 'profile',
-    review: '#reviews',
 
     //parameters
     focus_areas: 'focus_areas',
@@ -18,7 +16,7 @@ export default () => ({
     page_number: 1,
 
     // location
-    britain: '',
+    // britain: '',
     denmark: 'dk',
     france: 'fr',
     netherlands: 'nl',

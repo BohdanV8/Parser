@@ -5,56 +5,60 @@ import { Review } from 'src/models/review.model';
 
 @Injectable()
 export class CompanyService {
-    async getCompanies(): Promise<string[][]>{
+    async getCompanies(): Promise<Company[]>{
 
-        const browser = await puppeteer.launch(
-            //can't work for Andrii without that
-            { headless: false }
-        )
-        const page = await browser.newPage()
-
-        let companies = []
+        const companies = []
         let company: Company
 
         try {
-            //Insert the link from parameter 
-            await page.goto('https://clutch.co/developers')
-            // await page.goto('https://clutch.co/developers/ecommerce')
-            await page.setViewport({
-                 width: 1920,
-                height: 1080,
-            })
+            let next_link = 'https://clutch.co/developers'
+            while(next_link != ''){
 
-            const company_items = await page.$$('.providers__list > .provider-list-item')
+                const browser = await puppeteer.launch(
+                    //can't work for Andrii without that
+                    { headless: false }
+                )
+                const page = await browser.newPage()
 
-            for(const company_item of company_items){
+                await page.goto(next_link)
 
-                const name = await page.evaluate(el => el.querySelector('h3 > a').innerHTML.trim(), company_item)
-                const link = await page.evaluate(el => el.querySelector('h3 > a').getAttribute('href').trim(), company_item)
-                const mark = await page.evaluate(
-                    el => el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span'), 
-                    company_item) 
-                    ? await page.evaluate(el => Number(el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span').innerHTML.trim()), company_item) 
-                    : 0
-                if(mark > 0 && mark < 4){
+                await page.waitForSelector('.providers__list');
+                const company_items = await page.$$('.providers__list > .provider-list-item')
 
-                    let reviews: Review[]
-
-                    company.mark = mark
-                    company.name = name
-                    company.profileLink = link
-
-                    await page.goto(`https://clutch.co/${link}`)
-
-                    companies.push(company)
-
+                company_items.forEach(async company_item => {
+                    const name = await page.evaluate(el => el.querySelector('h3 > a').innerHTML.trim(), company_item)
+                    const profile = await page.evaluate(el => el.querySelector('h3 > a').getAttribute('href').trim(), company_item)
+                    const mark = await page.evaluate(el => el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span'),company_item) 
+                        ? await page.evaluate(el => Number(el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span').innerHTML.trim()), company_item) 
+                        : 0
+                    if(mark > 0 && mark < 4){
+    
+                        let reviews: Review[]
+    
+                        company.mark = mark
+                        company.name = name
+                        company.profileLink = profile
+                        company.reviews = reviews
+    
+                        companies.push(company)
+                    }
+                })
+                
+                const next = await page.$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next')
+                if(!next){
+                    await browser.close()
+                    break
                 }
-            }
+
+                next_link = 'https://clutch.co' + await page.evaluate(el => el.getAttribute('href').trim(), next)
+
+                await browser.close()
+            } 
 
         } catch (error){
             console.log('Scrapping error: ', error)
         } finally{
-            await browser.close()
+            console.log(companies)
             return companies
          }
         
