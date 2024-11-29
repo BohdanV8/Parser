@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Company } from 'src/models/company.model';
+import { Company } from 'src/modules/company/company.model';
 import puppeteer from 'puppeteer';
-import { Review } from 'src/models/review.model';
 
 @Injectable()
 export class CompanyService {
@@ -32,14 +31,11 @@ export class CompanyService {
                         ? await page.evaluate(el => Number(el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span').innerHTML.trim()), company_item) 
                         : 0
                     if(mark > 0 && mark < 4){
-    
-                        let reviews: Review[]
-    
+
+                        company
                         company.mark = mark
                         company.name = name
                         company.profileLink = profile
-                        company.reviews = reviews
-    
                         companies.push(company)
                     }
                 })
