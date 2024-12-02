@@ -7,10 +7,8 @@ export class CompanyController {
 
     @Get()
     getCompany(){
-        // let res: string;
         this.service.getCompanies()
             .then(data => console.log(data))
             .catch(error => console.log('Error: ', error))
-        // return res
     }
 }

@@ -1,5 +1,5 @@
 export interface Company {
     name: string,
-    mark: Number,
+    mark: number,
     profileLink: string,
 }

@@ -1,7 +1,7 @@
 export interface Review{
     name: string
     projectSummary: string
-    // feedbackSummary: string
+    feedbackSummary: string
     reviewMark: number
     qualityMark: number
     scheduleMark: number
