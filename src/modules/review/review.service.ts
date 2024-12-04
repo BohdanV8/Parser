@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { Review } from './review.model';
-import { fail } from 'assert';
 
 @Injectable()
 export class ReviewService {

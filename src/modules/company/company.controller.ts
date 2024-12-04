@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { CompanyService } from './company.service';
 
 @Controller('company')
@@ -6,9 +6,9 @@ export class CompanyController {
     constructor(private readonly service: CompanyService){}
 
     @Get()
-    getCompany(){
-        this.service.getCompanies()
-            .then(data => console.log(data))
-            .catch(error => console.log('Error: ', error))
+    getCompany(@Query('url') url: string){
+        return this.service.getCompanies(url)
+        .then(data => data)
+        .catch(error => console.log('Error: ', error))
     }
 }

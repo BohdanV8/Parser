@@ -16,11 +16,14 @@ export default () => ({
     page_number: 1,
 
     // location
-    // britain: '',
     denmark: 'dk',
     france: 'fr',
     netherlands: 'nl',
     norway: 'no',
     sweden: 'se',
     ukraine: 'uk',
+    england: 'uk/england',
+    wales: 'uk/wales',
+    scotland: 'uk/scotland',
+    ukIreland: 'uk/northern-ireland'
 })

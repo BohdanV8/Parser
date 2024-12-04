@@ -4,7 +4,7 @@ import puppeteer from 'puppeteer-extra';
 
 @Injectable()
 export class CompanyService {
-    async getCompanies(): Promise<Company[]>{
+    async getCompanies(url: string): Promise<Company[]>{
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
         
         const browser = await puppeteer.launch({ 
@@ -19,19 +19,18 @@ export class CompanyService {
             
         const page = await browser.newPage()
 
-        const companies = []
+        let companies: Company[] = []
 
         try {
 
             puppeteer.use(StealthPlugin());
 
-            let next_link = 'https://clutch.co/developers'
+            let next_link = url
 
             while(next_link != ''){
 
                 await page.goto(next_link)
 
-                await page.waitForSelector('.providers__list');
                 const company_items = await page.$$('.providers__list > .provider-list-item')
 
                 for(const company_item of company_items){
@@ -40,24 +39,27 @@ export class CompanyService {
                     const mark = await page.evaluate(el => el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span'),company_item) 
                         ? await page.evaluate(el => Number(el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span').innerHTML.trim()), company_item) 
                         : 0
-                    if(mark > 0 && mark < 4){
-                        const company = {
-                            mark : mark,
-                            name : name,
-                            profileLink : profile,
-                        }
-                        console.log(company)
-                        companies.push(company)
+                    const company = {
+                        mark : mark,
+                        name : name,
+                        profileLink : profile,
                     }
+                    companies.push(company)
                 }
                 
                 const next = await page.$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next')
+                
                 if(!next){
                     break
                 }
+                const href = await page.evaluate(el => el.getAttribute('href').trim(), next)
 
-                next_link = 'https://clutch.co' + await page.evaluate(el => el.getAttribute('href').trim(), next)
-
+                if(href === '#'){
+                    next_link = ''
+                }
+                else{
+                    next_link = 'https://clutch.co' + href
+                }
             } 
 
         } catch (error){
