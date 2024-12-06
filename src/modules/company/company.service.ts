@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Company } from 'src/modules/company/company.model';
+import { Company } from 'src/models/company.model';
 import puppeteer from 'puppeteer-extra';
+import { CompanyPage } from 'src/models/companyPage.model';
 
 @Injectable()
 export class CompanyService {
-    async getCompanies(url: string): Promise<Company[]>{
+    async getCompanies(url: string, pageNumber: number|null): Promise<CompanyPage>{
+
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
         
         const browser = await puppeteer.launch({ 
-            headless: true,
+            headless: false,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -17,56 +19,84 @@ export class CompanyService {
             ],
         })
             
-        const page = await browser.newPage()
+        const source = await browser.newPage()
 
         let companies: Company[] = []
+
+        let page: CompanyPage
+
+        const link = !pageNumber ? url
+            : url + `&page=${pageNumber}`
 
         try {
 
             puppeteer.use(StealthPlugin());
 
-            let next_link = url
+            await source.goto(link)
 
-            while(next_link != ''){
+            const company_items = await source.$$('#providers__list > .provider-list-item')
 
-                await page.goto(next_link)
+            for(const company_item of company_items){
+                const name = await source.evaluate(
+                    el => el.querySelector('h3 > a').innerHTML.trim(), 
+                    company_item
+                )
+                const profile = await source.evaluate(
+                    el => el.querySelector('h3 > a').getAttribute('href').trim(), 
+                    company_item
+                )
+                const mark = await source.evaluate(
+                    el => el.querySelector('div > div.provider__main-info > div.provider__rating.sg-rating.rating-reviews > span'),
+                    company_item
+                ) ? await source.evaluate(
+                    el => Number(el.querySelector('div > div.provider__main-info > div > span').innerHTML.trim()), 
+                    company_item
+                ) : 0
 
-                const company_items = await page.$$('.providers__list > .provider-list-item')
-
-                for(const company_item of company_items){
-                    const name = await page.evaluate(el => el.querySelector('h3 > a').innerHTML.trim(), company_item)
-                    const profile = await page.evaluate(el => el.querySelector('h3 > a').getAttribute('href').trim(), company_item)
-                    const mark = await page.evaluate(el => el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span'),company_item) 
-                        ? await page.evaluate(el => Number(el.querySelector('div > div.provider__main-info.provider__main-info--new-verified > div > span').innerHTML.trim()), company_item) 
-                        : 0
+                // if(summaryMark < 4){
                     const company = {
                         mark : mark,
                         name : name,
                         profileLink : profile,
                     }
-                    companies.push(company)
-                }
-                
-                const next = await page.$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next')
-                
-                if(!next){
-                    break
-                }
-                const href = await page.evaluate(el => el.getAttribute('href').trim(), next)
+                    const twin_company = companies.find(a => a.name == company.name)
+                    if(!twin_company){
+                        companies.push(company)
+                    }
+                // }
+            }
 
-                if(href === '#'){
-                    next_link = ''
-                }
-                else{
-                    next_link = 'https://clutch.co' + href
-                }
-            } 
+            const start = await source.$('#pagination-nav > div > a:nth-child(2)')
+            const startLink = await source.evaluate(el => el.getAttribute('href').trim(), start)
+
+            const previous = await source
+                .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-previous')
+            const previousLink = await source.evaluate(el => el.getAttribute('href').trim(), previous)
+
+            const next = await source
+                .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next')
+            const nextLink = await source.evaluate(el => el.getAttribute('href').trim(), next)
+
+            const last = await source
+                .$('#pagination-nav > div > a:nth-child(10)') ?? await source
+                .$('#pagination-nav > div > a.sg-pagination-v2-page.sg-pagination-v2-page-number.sg-pagination-v2-always-show')
+            const lastLink = await source.evaluate(el => el.getAttribute('href').trim(), last)
+
+            page = {
+                currentPage: link,
+                companies: companies,
+                startPage: `https://clutch.co/${startLink}`,
+                previousPage: `https://clutch.co/${previousLink}`,
+                nextPage: `https://clutch.co/${nextLink}`,
+                lastPage: `https://clutch.co/${lastLink}`,
+            }
 
         } catch (error){
             console.log('Scrapping error: ', error)
         } finally{
             await browser.close()
-            return companies
+            // console.log(companies)
+            return page
          }
         
     }
