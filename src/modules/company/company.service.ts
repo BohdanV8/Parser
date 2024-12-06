@@ -10,7 +10,7 @@ export class CompanyService {
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
         
         const browser = await puppeteer.launch({ 
-            headless: false,
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -46,10 +46,10 @@ export class CompanyService {
                     company_item
                 )
                 const mark = await source.evaluate(
-                    el => el.querySelector('div > div.provider__main-info > div.provider__rating.sg-rating.rating-reviews > span'),
+                    el => el.querySelector('.provider__main-info > div > span'),
                     company_item
                 ) ? await source.evaluate(
-                    el => Number(el.querySelector('div > div.provider__main-info > div > span').innerHTML.trim()), 
+                    el => Number(el.querySelector('.provider__main-info > div > span').innerHTML.trim()), 
                     company_item
                 ) : 0
 

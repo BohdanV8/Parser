@@ -32,13 +32,12 @@ export class ReviewService {
             puppeteer.use(StealthPlugin());
 
             await source.goto(fullLink)
-            await source.waitForSelector('#reviews-list');
             const reviewItems = await source.$$('#reviews-list > .profile-review')
 
             for(const reviewItem of reviewItems) {
                 const reviewName = await source.evaluate(el => el
                     .querySelector('.profile-review__header > h4')
-                    .innerHTML.trim(), reviewItem
+                    .innerHTML.trim().replaceAll('&amp;', '&'), reviewItem
                 )
                 const reviewerName = await source.evaluate(el => el
                     .querySelector('.reviewer_card > .reviewer_card--name')
@@ -76,7 +75,7 @@ export class ReviewService {
                 // if(summaryMark < 4){
 
                     const review = {
-                        name : reviewName,
+                        name : reviewName.replaceAll('&amp', '&'),
                         reviewerName : reviewerName,
                         projectSummary : project,
                         feedbackSummary : feedback,
@@ -96,7 +95,7 @@ export class ReviewService {
                 const startPage = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
                 startLink = startPage === 0 
                     ? link + url + reviewBlock
-                    : link + url + `page=${startPage}` + reviewBlock
+                    : link + url + `?page=${startPage}` + reviewBlock
             }
 
             let previousLink = ''
@@ -105,7 +104,7 @@ export class ReviewService {
                 const previousPage = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), previous)
                 previousLink = previousPage === 0 
                     ? link + url + reviewBlock
-                    : link + url + `page=${previousPage}` + reviewBlock
+                    : link + url + `?page=${previousPage}` + reviewBlock
             }
 
             let nextLink = ''
@@ -114,7 +113,7 @@ export class ReviewService {
                 const nextPage = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
                 nextLink = nextPage === 0 
                     ? link + url + reviewBlock
-                    : link + url + `page=${nextPage}` + reviewBlock
+                    : link + url + `?page=${nextPage}` + reviewBlock
             }
 
             let lastLink = ''
@@ -123,7 +122,7 @@ export class ReviewService {
                 const lastPage = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
                 lastLink = lastPage === 0 
                     ? link + url + reviewBlock
-                    : link + url + `page=${lastPage}` + reviewBlock
+                    : link + url + `?page=${lastPage}` + reviewBlock
             }
 
             page = {
