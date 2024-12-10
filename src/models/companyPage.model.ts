@@ -1,10 +1,11 @@
 import { Company } from "./company.model";
+import { PageLink } from "./pageLink.model";
 
 export interface CompanyPage {
-    startPage: string,
-    previousPage: string,
-    currentPage: string,
-    nextPage: string,
-    lastPage: string,
+    startPage: PageLink,
+    previousPage: PageLink,
+    currentPage: PageLink,
+    nextPage: PageLink,
+    lastPage: PageLink,
     companies: Company[]
 }

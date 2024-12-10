@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { Review } from '../../models/review.model';
 import puppeteer from 'puppeteer-extra';
+import { Injectable } from '@nestjs/common';
 import { ProfilePage } from 'src/models/profilePage.model';
+import { PageLink } from 'src/models/pageLink.model';
 
 @Injectable()
 export class ReviewService {
@@ -23,9 +23,9 @@ export class ReviewService {
         let page: ProfilePage
         const reviews = []
         
-        const link = 'https://clutch.co'
+        const main = 'https://clutch.co'
         const reviewBlock = '#reviews'
-        const fullLink = link + url + reviewBlock
+        const fullLink = main + url + reviewBlock
 
         try {
 
@@ -45,11 +45,11 @@ export class ReviewService {
                 )
                 const project = await source.evaluate(el => el
                     .querySelector('.profile-review__summary > p:nth-child(2)')
-                    .innerHTML.trim(), reviewItem
+                    .innerHTML.trim().replaceAll('&nbsp;', '.'), reviewItem
                 )
                 const feedback = await source.evaluate(el => el
                     .querySelector('.profile-review__feedback > p:nth-child(2)')
-                    .innerHTML.trim(), reviewItem
+                    .innerHTML.trim().replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'), reviewItem
                 )
                 const summaryMark = await source.evaluate(el => Number(el
                     .querySelector('.sg-rating.profile-review__rating > .sg-rating__number')
@@ -89,47 +89,61 @@ export class ReviewService {
                 // }
             }
 
-            let startLink = ''
+            let startPage: PageLink
+            let previousPage: PageLink
+            let nextPage: PageLink
+            let lastPage: PageLink
+
+            const link = url.includes('?page=') 
+                ? url.replace(/\?page=\d+/, '') 
+                : url;
+
             const start = await source.$('.sg-pagination__item > .sg-pagination__link--icon-first') 
             if(start){
-                const startPage = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
-                startLink = startPage === 0 
-                    ? link + url + reviewBlock
-                    : link + url + `?page=${startPage}` + reviewBlock
+                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
+                startPage = {
+                    number: number + 1,
+                    link: link + reviewBlock
+                }
             }
 
-            let previousLink = ''
             const previous = await source.$('.sg-pagination__item > .sg-pagination__link--icon-previous')
             if(previous){
-                const previousPage = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), previous)
-                previousLink = previousPage === 0 
-                    ? link + url + reviewBlock
-                    : link + url + `?page=${previousPage}` + reviewBlock
+                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), previous)
+                previousPage = number === 2 
+                ? {
+                    number: number - 1,
+                    link: link + reviewBlock
+                } 
+                : {
+                    number: number - 1,
+                    link: link + `?page=${number}` + reviewBlock
+                }
             }
 
-            let nextLink = ''
             const next = await source.$('.sg-pagination__item > .sg-pagination__link--icon-next')
             if(next){
-                const nextPage = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
-                nextLink = nextPage === 0 
-                    ? link + url + reviewBlock
-                    : link + url + `?page=${nextPage}` + reviewBlock
+                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
+                nextPage = {
+                    number: number + 1,
+                    link: link + `?page=${number}` + reviewBlock
+                }
             }
 
-            let lastLink = ''
             const last = await source.$('.sg-pagination__item > .sg-pagination__link--icon-last')
             if(last){
-                const lastPage = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
-                lastLink = lastPage === 0 
-                    ? link + url + reviewBlock
-                    : link + url + `?page=${lastPage}` + reviewBlock
+                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), last)
+                lastPage = {
+                    number: number + 1,
+                    link: link + `?page=${number}` + reviewBlock
+                }
             }
 
             page = {
-                firstPage: startLink,
-                previousPage: previousLink,
-                nextPage: nextLink,
-                lastPage: lastLink,
+                firstPage: startPage,
+                previousPage: previousPage,
+                nextPage: nextPage,
+                lastPage: lastPage,
                 reviews: reviews
             }
         } catch (error){

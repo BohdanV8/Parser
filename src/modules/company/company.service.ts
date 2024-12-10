@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Company } from 'src/models/company.model';
 import puppeteer from 'puppeteer-extra';
 import { CompanyPage } from 'src/models/companyPage.model';
+import { PageLink } from 'src/models/pageLink.model';
 
 @Injectable()
 export class CompanyService {
@@ -67,35 +68,72 @@ export class CompanyService {
             }
 
             const start = await source.$('#pagination-nav > div > a:nth-child(2)')
-            const startLink = await source.evaluate(el => el.getAttribute('href').trim(), start)
+            let startPage : PageLink
+
+            if(start){
+                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
+                const link = await source.evaluate(el => el.getAttribute('href').trim(), start)
+                startPage = {
+                    number: number + 1,
+                    link: `https://clutch.co/${link}`
+                }
+            }
 
             const previous = await source
                 .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-previous')
-            const previousLink = await source.evaluate(el => el.getAttribute('href').trim(), previous)
+            let previousPage: PageLink
+            if(previous){
+                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), previous)
+                const link = await source.evaluate(el => el.getAttribute('href').trim(), previous)
+                previousPage = {
+                    number: number + 1,
+                    link: `https://clutch.co/${link}`
+                }
+            }
+
+            const currentPage = {
+                number: Number(pageNumber) + 1,
+                link: link
+            }
 
             const next = await source
                 .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next')
-            const nextLink = await source.evaluate(el => el.getAttribute('href').trim(), next)
+            let nextPage: PageLink
+            if(next){
+                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
+                const link = await source.evaluate(el => el.getAttribute('href').trim(), next)
+                nextPage = {
+                    number: number + 1,
+                    link: `https://clutch.co/${link}`
+                }
+            }
 
             const last = await source
                 .$('#pagination-nav > div > a:nth-child(10)') ?? await source
                 .$('#pagination-nav > div > a.sg-pagination-v2-page.sg-pagination-v2-page-number.sg-pagination-v2-always-show')
-            const lastLink = await source.evaluate(el => el.getAttribute('href').trim(), last)
+            let lastPage: PageLink
+            if(last){
+                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), last)
+                const link = await source.evaluate(el => el.getAttribute('href').trim(), last)
+                lastPage = {
+                    number: number + 1,
+                    link: `https://clutch.co/${link}`
+                }
+            }
 
             page = {
-                currentPage: link,
                 companies: companies,
-                startPage: `https://clutch.co/${startLink}`,
-                previousPage: `https://clutch.co/${previousLink}`,
-                nextPage: `https://clutch.co/${nextLink}`,
-                lastPage: `https://clutch.co/${lastLink}`,
+                currentPage: currentPage,
+                startPage: startPage,
+                previousPage: previousPage,
+                nextPage: nextPage,
+                lastPage: lastPage,
             }
 
         } catch (error){
             console.log('Scrapping error: ', error)
         } finally{
             await browser.close()
-            // console.log(companies)
             return page
          }
         
