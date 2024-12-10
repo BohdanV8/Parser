@@ -103,6 +103,7 @@ export class ReviewService {
                 const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
                 startPage = {
                     number: number + 1,
+                    route: '/company',
                     link: link + reviewBlock
                 }
             }
@@ -113,10 +114,12 @@ export class ReviewService {
                 previousPage = number === 2 
                 ? {
                     number: number - 1,
+                    route: '/company',
                     link: link + reviewBlock
                 } 
                 : {
                     number: number - 1,
+                    route: '/company',
                     link: link + `?page=${number}` + reviewBlock
                 }
             }
@@ -126,6 +129,7 @@ export class ReviewService {
                 const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
                 nextPage = {
                     number: number + 1,
+                    route: '/company',
                     link: link + `?page=${number}` + reviewBlock
                 }
             }
@@ -135,6 +139,7 @@ export class ReviewService {
                 const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), last)
                 lastPage = {
                     number: number + 1,
+                    route: '/company',
                     link: link + `?page=${number}` + reviewBlock
                 }
             }

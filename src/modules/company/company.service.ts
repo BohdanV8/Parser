@@ -6,7 +6,7 @@ import { PageLink } from 'src/models/pageLink.model';
 
 @Injectable()
 export class CompanyService {
-    async getCompanies(url: string, pageNumber: number|null): Promise<CompanyPage>{
+    async getCompanies(url: string, pageNumber: number = 0): Promise<CompanyPage>{
 
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
         
@@ -75,7 +75,8 @@ export class CompanyService {
                 const link = await source.evaluate(el => el.getAttribute('href').trim(), start)
                 startPage = {
                     number: number + 1,
-                    link: `https://clutch.co/${link}`
+                    route: '/company',
+                    link: `https://clutch.co${link}`
                 }
             }
 
@@ -87,12 +88,14 @@ export class CompanyService {
                 const link = await source.evaluate(el => el.getAttribute('href').trim(), previous)
                 previousPage = {
                     number: number + 1,
-                    link: `https://clutch.co/${link}`
+                    route: '/company',
+                    link: `https://clutch.co${link}`
                 }
             }
 
             const currentPage = {
                 number: Number(pageNumber) + 1,
+                route: '/company',
                 link: link
             }
 
@@ -104,7 +107,8 @@ export class CompanyService {
                 const link = await source.evaluate(el => el.getAttribute('href').trim(), next)
                 nextPage = {
                     number: number + 1,
-                    link: `https://clutch.co/${link}`
+                    route: '/company',
+                    link: `https://clutch.co${link}`
                 }
             }
 
@@ -117,7 +121,8 @@ export class CompanyService {
                 const link = await source.evaluate(el => el.getAttribute('href').trim(), last)
                 lastPage = {
                     number: number + 1,
-                    link: `https://clutch.co/${link}`
+                    route: '/company',
+                    link: `https://clutch.co${link}`
                 }
             }
 
