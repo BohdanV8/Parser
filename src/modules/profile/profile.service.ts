@@ -26,6 +26,7 @@ export class ReviewService {
         const main = 'https://clutch.co'
         const reviewBlock = '#reviews'
         const fullLink = main + url + reviewBlock
+        const route = '/profile'
 
         try {
 
@@ -45,7 +46,7 @@ export class ReviewService {
                 )
                 const project = await source.evaluate(el => el
                     .querySelector('.profile-review__summary > p:nth-child(2)')
-                    .innerHTML.trim().replaceAll('&nbsp;', '.'), reviewItem
+                    .innerHTML.trim().replaceAll('&nbsp;', ''), reviewItem
                 )
                 const feedback = await source.evaluate(el => el
                     .querySelector('.profile-review__feedback > p:nth-child(2)')
@@ -103,8 +104,8 @@ export class ReviewService {
                 const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
                 startPage = {
                     number: number + 1,
-                    route: '/company',
-                    link: link + reviewBlock
+                    route: route,
+                    link: link
                 }
             }
 
@@ -114,23 +115,33 @@ export class ReviewService {
                 previousPage = number === 2 
                 ? {
                     number: number - 1,
-                    route: '/company',
-                    link: link + reviewBlock
+                    route: route,
+                    link: link
                 } 
                 : {
                     number: number - 1,
-                    route: '/company',
-                    link: link + `?page=${number}` + reviewBlock
+                    route: route,
+                    link: link + `?page=${number - 2}`
                 }
             }
+
+            const pageNumber = url.includes('?page=') 
+                ? Number(url.replace(link + '?page=' , '')) 
+                : 1;
+
+            const currentPage = {
+                number: pageNumber,
+                route: route,
+                link: url
+            } 
 
             const next = await source.$('.sg-pagination__item > .sg-pagination__link--icon-next')
             if(next){
                 const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
                 nextPage = {
                     number: number + 1,
-                    route: '/company',
-                    link: link + `?page=${number}` + reviewBlock
+                    route: route,
+                    link: link + `?page=${number}`
                 }
             }
 
@@ -139,14 +150,15 @@ export class ReviewService {
                 const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), last)
                 lastPage = {
                     number: number + 1,
-                    route: '/company',
-                    link: link + `?page=${number}` + reviewBlock
+                    route: route,
+                    link: link + `?page=${number}`
                 }
             }
 
             page = {
-                firstPage: startPage,
+                startPage: startPage,
                 previousPage: previousPage,
+                currentPage: currentPage,
                 nextPage: nextPage,
                 lastPage: lastPage,
                 reviews: reviews

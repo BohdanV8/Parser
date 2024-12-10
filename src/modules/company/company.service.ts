@@ -28,6 +28,7 @@ export class CompanyService {
 
         const link = !pageNumber ? url
             : url + `&page=${pageNumber}`
+        const route = '/company'
 
         try {
 
@@ -74,8 +75,8 @@ export class CompanyService {
                 const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
                 const link = await source.evaluate(el => el.getAttribute('href').trim(), start)
                 startPage = {
-                    number: number + 1,
-                    route: '/company',
+                    number: number + 1, 
+                    route: route,
                     link: `https://clutch.co${link}`
                 }
             }
@@ -88,14 +89,14 @@ export class CompanyService {
                 const link = await source.evaluate(el => el.getAttribute('href').trim(), previous)
                 previousPage = {
                     number: number + 1,
-                    route: '/company',
+                    route: route,
                     link: `https://clutch.co${link}`
                 }
             }
 
             const currentPage = {
                 number: Number(pageNumber) + 1,
-                route: '/company',
+                route: route,
                 link: link
             }
 
@@ -107,7 +108,7 @@ export class CompanyService {
                 const link = await source.evaluate(el => el.getAttribute('href').trim(), next)
                 nextPage = {
                     number: number + 1,
-                    route: '/company',
+                    route: route,
                     link: `https://clutch.co${link}`
                 }
             }
@@ -121,7 +122,7 @@ export class CompanyService {
                 const link = await source.evaluate(el => el.getAttribute('href').trim(), last)
                 lastPage = {
                     number: number + 1,
-                    route: '/company',
+                    route: route,
                     link: `https://clutch.co${link}`
                 }
             }
