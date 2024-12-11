@@ -36,50 +36,61 @@ export class ReviewService {
             const reviewItems = await source.$$('#reviews-list > .profile-review')
 
             for(const reviewItem of reviewItems) {
-                const reviewName = await source.evaluate(el => el
-                    .querySelector('.profile-review__header > h4')
-                    .innerHTML.trim().replaceAll('&amp;', '&'), reviewItem
+                const reviewName = await source.evaluate(
+                    el => el.querySelector('.profile-review__header > h4')
+                        .innerHTML.trim().replaceAll('&amp;', '&'), 
+                    reviewItem
                 )
-                const reviewerName = await source.evaluate(el => el
-                    .querySelector('.reviewer_card > .reviewer_card--name')
+                const reviewerName = await source.evaluate(
+                    el => el.querySelector('.reviewer_card > .reviewer_card--name')
                     .innerHTML.trim(), reviewItem
                 )
-                const project = await source.evaluate(el => el
-                    .querySelector('.profile-review__summary > p:nth-child(2)')
-                    .innerHTML.trim().replaceAll('&nbsp;', ''), reviewItem
+                const project = await source.evaluate(
+                    el => el.querySelector('.profile-review__summary > p:nth-child(2)')
+                    .innerHTML.trim(), 
+                    reviewItem
                 )
-                const feedback = await source.evaluate(el => el
-                    .querySelector('.profile-review__feedback > p:nth-child(2)')
-                    .innerHTML.trim().replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'), reviewItem
+                const feedback = await source.evaluate(
+                    el => el.querySelector('.profile-review__feedback > p:nth-child(2)')
+                        .innerHTML.trim(), 
+                    reviewItem
                 )
-                const summaryMark = await source.evaluate(el => Number(el
-                    .querySelector('.sg-rating.profile-review__rating > .sg-rating__number')
-                    .innerHTML.trim()), reviewItem
+                const summaryMark = await source.evaluate(
+                    el => Number(
+                        el.querySelector('.sg-rating.profile-review__rating > .sg-rating__number')
+                        .innerHTML.trim()
+                    ), reviewItem
                 )
-                const qualityMark = await source.evaluate(el => Number(el
-                    .querySelector('.profile-review__rating-metrics > dl:nth-child(1) > dd')
-                    .innerHTML.trim()), reviewItem
+                const qualityMark = await source.evaluate(
+                    el => Number(
+                        el.querySelector('.profile-review__rating-metrics > dl:nth-child(1) > dd')
+                        .innerHTML.trim()
+                    ), reviewItem
                 )
-                const scheduleMark = await source.evaluate(el => Number(el
-                    .querySelector('.profile-review__rating-metrics > dl:nth-child(2) > dd')
-                    .innerHTML.trim()), reviewItem
+                const scheduleMark = await source.evaluate(
+                    el => Number(
+                        el.querySelector('.profile-review__rating-metrics > dl:nth-child(2) > dd')
+                        .innerHTML.trim()
+                    ), reviewItem
                 )
-                const costMark = await source.evaluate(el => Number(el
-                    .querySelector('.profile-review__rating-metrics > dl:nth-child(3) > dd')
-                    .innerHTML.trim()), reviewItem
+                const costMark = await source.evaluate(el => Number(
+                    el.querySelector('.profile-review__rating-metrics > dl:nth-child(3) > dd')
+                        .innerHTML.trim()
+                    ), reviewItem
                 )
-                const referMark = await source.evaluate(el => Number(el
-                    .querySelector('.profile-review__rating-metrics > dl:nth-child(4) > dd')
-                    .innerHTML.trim()), reviewItem
+                const referMark = await source.evaluate(el => Number(
+                    el.querySelector('.profile-review__rating-metrics > dl:nth-child(4) > dd')
+                        .innerHTML.trim()
+                    ), reviewItem
                 )
                 
                 // if(summaryMark < 4){
 
                     const review = {
-                        name : reviewName.replaceAll('&amp', '&'),
-                        reviewerName : reviewerName,
-                        projectSummary : project,
-                        feedbackSummary : feedback,
+                        name : reviewName.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'),
+                        reviewerName : reviewerName.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'),
+                        projectSummary : project.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'),
+                        feedbackSummary : feedback.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'),
                         reviewMark : summaryMark,
                         costMark : costMark,
                         qualityMark : qualityMark,
@@ -99,45 +110,57 @@ export class ReviewService {
                 ? url.replace(/\?page=\d+/, '') 
                 : url;
 
+            const pageNumber = url.includes('?page=') 
+                ? Number(url.replace(link + '?page=' , '')) 
+                : 0;
+
+            const currentPage = {
+                number: pageNumber + 1,
+                route: route,
+                link: url
+            }
+
             const start = await source.$('.sg-pagination__item > .sg-pagination__link--icon-first') 
             if(start){
-                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
-                startPage = {
-                    number: number + 1,
-                    route: route,
-                    link: link
+                const number = await source.evaluate(
+                    el => Number(el.getAttribute('data-page').trim()), 
+                    start
+                )
+                console.log(number)
+                if(pageNumber !== number){
+                    startPage = {
+                        number: number + 1,
+                        route: route,
+                        link: link
+                    }
                 }
             }
 
             const previous = await source.$('.sg-pagination__item > .sg-pagination__link--icon-previous')
             if(previous){
-                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), previous)
-                previousPage = number === 2 
-                ? {
-                    number: number - 1,
-                    route: route,
-                    link: link
-                } 
-                : {
-                    number: number - 1,
-                    route: route,
-                    link: link + `?page=${number - 2}`
+                const number = await source.evaluate(
+                    el => Number(el.getAttribute('data-page').trim()), 
+                    previous
+                ) - 1
+                console.log(number)
+                if(startPage.number !== number){
+                    previousPage = {
+                        number: number,
+                        route: route,
+                        link: link + `?page=${number}`
+                    } 
                 }
-            }
-
-            const pageNumber = url.includes('?page=') 
-                ? Number(url.replace(link + '?page=' , '')) 
-                : 1;
-
-            const currentPage = {
-                number: pageNumber,
-                route: route,
-                link: url
             } 
+
+            console.log(pageNumber)
 
             const next = await source.$('.sg-pagination__item > .sg-pagination__link--icon-next')
             if(next){
-                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
+                const number = await source.evaluate(
+                    el => Number(el.getAttribute('data-page').trim()), 
+                    next
+                )
+                console.log(number)
                 nextPage = {
                     number: number + 1,
                     route: route,
@@ -147,13 +170,33 @@ export class ReviewService {
 
             const last = await source.$('.sg-pagination__item > .sg-pagination__link--icon-last')
             if(last){
-                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), last)
-                lastPage = {
-                    number: number + 1,
-                    route: route,
-                    link: link + `?page=${number}`
+                const number = await source.evaluate(
+                    el => Number(el.getAttribute('data-page').trim()), 
+                    last
+                )
+                console.log(number)
+                if(number !== nextPage.number){
+                    lastPage = {
+                        number: number,
+                        route: route,
+                        link: link + `?page=${number-1}`
+                    }
                 }
             }
+            // if(last){
+            //     const number = await source.evaluate(
+            //         el => Number(el.getAttribute('data-page').trim()), 
+            //         last
+            //     )
+            //     console.log(pageNumber, number)
+            //     if(number !== 0){
+            //         lastPage = {
+            //             number: number + 1,
+            //             route: route,
+            //             link: link + `?page=${number}`
+            //         }
+            //     }
+            // }
 
             page = {
                 startPage: startPage,
@@ -163,6 +206,7 @@ export class ReviewService {
                 lastPage: lastPage,
                 reviews: reviews
             }
+            
         } catch (error){
             console.log('Scrapping error: ', error)
         } finally{

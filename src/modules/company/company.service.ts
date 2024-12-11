@@ -68,31 +68,10 @@ export class CompanyService {
                 // }
             }
 
-            const start = await source.$('#pagination-nav > div > a:nth-child(2)')
             let startPage : PageLink
-
-            if(start){
-                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), start)
-                const link = await source.evaluate(el => el.getAttribute('href').trim(), start)
-                startPage = {
-                    number: number + 1, 
-                    route: route,
-                    link: `https://clutch.co${link}`
-                }
-            }
-
-            const previous = await source
-                .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-previous')
             let previousPage: PageLink
-            if(previous){
-                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), previous)
-                const link = await source.evaluate(el => el.getAttribute('href').trim(), previous)
-                previousPage = {
-                    number: number + 1,
-                    route: route,
-                    link: `https://clutch.co${link}`
-                }
-            }
+            let nextPage: PageLink
+            let lastPage: PageLink
 
             const currentPage = {
                 number: Number(pageNumber) + 1,
@@ -100,30 +79,84 @@ export class CompanyService {
                 link: link
             }
 
-            const next = await source
-                .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next')
-            let nextPage: PageLink
-            if(next){
-                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), next)
-                const link = await source.evaluate(el => el.getAttribute('href').trim(), next)
-                nextPage = {
-                    number: number + 1,
-                    route: route,
-                    link: `https://clutch.co${link}`
+            const start = await source.$('#pagination-nav > div > a:nth-child(2)')
+            if(start){
+                const number = await source.evaluate(
+                    el => Number(el.getAttribute('data-page').trim()), 
+                    start
+                )
+                const link = await source.evaluate(
+                    el => el.getAttribute('href').trim(), 
+                    start
+                )
+                if(pageNumber !== number){
+                    startPage = {
+                        number: number + 1, 
+                        route: route,
+                        link: `https://clutch.co${link}`
+                    }
                 }
             }
 
-            const last = await source
-                .$('#pagination-nav > div > a:nth-child(10)') ?? await source
-                .$('#pagination-nav > div > a.sg-pagination-v2-page.sg-pagination-v2-page-number.sg-pagination-v2-always-show')
-            let lastPage: PageLink
+            const previous = await source
+                .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-previous')
+            if(previous){
+                const number = await source.evaluate(
+                    el => Number(el.getAttribute('data-page').trim()), 
+                    previous
+                )
+                const link = await source.evaluate(
+                    el => el.getAttribute('href').trim(), 
+                    previous
+                )
+                if(pageNumber !== number && 
+                    Number(startPage.number) - 1 !== number){
+                    previousPage = {
+                        number: number + 1, 
+                        route: route,
+                        link: `https://clutch.co${link}`
+                    }
+                }
+            }
+
+            const next = await source
+                .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next')
+            if(next){
+                const number = await source.evaluate(
+                    el => Number(el.getAttribute('data-page').trim()), 
+                    next
+                )
+                const link = await source.evaluate(
+                    el => el.getAttribute('href').trim(), 
+                    next
+                )
+                if(link !== '#'){
+                    nextPage = {
+                        number: number + 1,
+                        route: route,
+                        link: `https://clutch.co${link}`
+                    }
+                }
+            }
+
+            const last = await source.$('#pagination-nav > div > a:nth-child(10)') 
+            ?? await source
+            .$('#pagination-nav > div > a.sg-pagination-v2-page.sg-pagination-v2-page-number.sg-pagination-v2-always-show')
             if(last){
-                const number = await source.evaluate(el => Number(el.getAttribute('data-page').trim()), last)
-                const link = await source.evaluate(el => el.getAttribute('href').trim(), last)
-                lastPage = {
-                    number: number + 1,
-                    route: route,
-                    link: `https://clutch.co${link}`
+                const number = await source.evaluate(
+                    el => Number(el.getAttribute('data-page').trim()), 
+                    last
+                )
+                const link = await source.evaluate(
+                    el => el.getAttribute('href').trim(), 
+                    last
+                )
+                if(number !== 0){
+                    lastPage = {
+                        number: number + 1,
+                        route: route,
+                        link: `https://clutch.co${link}`
+                    }
                 }
             }
 
