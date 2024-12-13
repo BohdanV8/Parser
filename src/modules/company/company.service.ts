@@ -7,11 +7,21 @@ import { PageLink } from 'src/models/pageLink.model';
 @Injectable()
 export class CompanyService {
     async getCompanies(url: string, pageNumber: number = 0): Promise<CompanyPage>{
+        
+        if(url.includes('?page=')){
+            const link = url.includes('?page=') 
+                ? url.replace(/\?page=\d+/, '') 
+                : url;
+
+            pageNumber = url.includes('?page=') 
+                ? Number(url.replace(link + '?page=' , '')) 
+                : 0;
+        }
 
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
         
         const browser = await puppeteer.launch({ 
-            headless: true,
+            headless: false,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -26,8 +36,9 @@ export class CompanyService {
 
         let page: CompanyPage
 
-        const link = !pageNumber ? url
-            : url + `&page=${pageNumber}`
+        const link = pageNumber 
+            ? url + `&page=${pageNumber}`
+            : url
         const route = '/company'
 
         try {
@@ -38,9 +49,12 @@ export class CompanyService {
 
             const company_items = await source.$$('#providers__list > .provider-list-item')
 
+            console.log(company_items)
+
             for(const company_item of company_items){
                 const name = await source.evaluate(
-                    el => el.querySelector('h3 > a').innerHTML.trim(), 
+                    el => el.querySelector('h3 > a').innerHTML
+                        .replaceAll('&nbsp;', '.').replaceAll('&amp;', '&').trim(), 
                     company_item
                 )
                 const profile = await source.evaluate(
@@ -67,6 +81,8 @@ export class CompanyService {
                     }
                 // }
             }
+
+            console.log(companies)
 
             let startPage : PageLink
             let previousPage: PageLink
@@ -119,29 +135,36 @@ export class CompanyService {
                 }
             }
 
-            const next = await source
-                .$('#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next')
+            const next = await source.$(
+                '#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next'
+            )
             if(next){
-                const number = await source.evaluate(
-                    el => Number(el.getAttribute('data-page').trim()), 
-                    next
+                const disabled_next = await source.$(
+                    '#pagination-nav > div > a.sg-pagination-v2-page-actions.sg-pagination-v2-next.sg-pagination-v2-disabled'
                 )
-                const link = await source.evaluate(
-                    el => el.getAttribute('href').trim(), 
-                    next
-                )
-                if(link !== '#'){
-                    nextPage = {
-                        number: number + 1,
-                        route: route,
-                        link: `https://clutch.co${link}`
+                if(next !== disabled_next){
+                    const number = await source.evaluate(
+                        el => Number(el.getAttribute('data-page').trim()), 
+                        next
+                    )
+                    const link = await source.evaluate(
+                        el => el.getAttribute('href').trim(), 
+                        next
+                    )
+                    if(link !== '#'){
+                        nextPage = {
+                            number: number + 1,
+                            route: route,
+                            link: `https://clutch.co${link}`
+                        }
                     }
                 }
             }
 
             const last = await source.$('#pagination-nav > div > a:nth-child(10)') 
-            ?? await source
-            .$('#pagination-nav > div > a.sg-pagination-v2-page.sg-pagination-v2-page-number.sg-pagination-v2-always-show')
+            ?? await source.$(
+                '#pagination-nav > div > a.sg-pagination-v2-page.sg-pagination-v2-page-number.sg-pagination-v2-always-show'
+            )
             if(last){
                 const number = await source.evaluate(
                     el => Number(el.getAttribute('data-page').trim()), 
@@ -168,6 +191,7 @@ export class CompanyService {
                 nextPage: nextPage,
                 lastPage: lastPage,
             }
+            // console.log(page)
 
         } catch (error){
             console.log('Scrapping error: ', error)

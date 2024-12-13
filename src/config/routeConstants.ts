@@ -17,13 +17,13 @@ export default () => ({
 
     // location
     denmark: 'dk',
+    england: 'uk/england',
     france: 'fr',
     netherlands: 'nl',
+    northIreland: 'uk/northern-ireland',
     norway: 'no',
-    sweden: 'se',
-    ukraine: 'uk',
-    england: 'uk/england',
-    wales: 'uk/wales',
     scotland: 'uk/scotland',
-    ukIreland: 'uk/northern-ireland'
+    sweden: 'se',
+    ukraine: 'ua',
+    wales: 'uk/wales',
 })
