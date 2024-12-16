@@ -21,7 +21,7 @@ export class CompanyService {
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
         
         const browser = await puppeteer.launch({ 
-            headless: false,
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -68,12 +68,26 @@ export class CompanyService {
                     el => Number(el.querySelector('.provider__main-info > div > span').innerHTML.trim()), 
                     company_item
                 ) : 0
+                const loc = await source.evaluate(el => el
+                    .querySelector('.provider__highlights-item.sg-tooltip-v2.location > .locality')
+                    .innerHTML.trim(), 
+                    company_item
+                )
 
-                // if(summaryMark < 4){
+                const field_items = await company_item.$$('.provider__services-list > .provider__services-list-item')
+                let fields = []
+                for(const field_item of field_items){
+                    const content = await source.evaluate(el => el.innerHTML.trim(), field_item)
+                    fields.push(content)
+                }
+
+                // if(summaryMark <= 4){
                     const company = {
                         mark : mark,
                         name : name,
+                        location: loc,
                         profileLink : profile,
+                        fields: fields,
                     }
                     const twin_company = companies.find(a => a.name == company.name)
                     if(!twin_company){
@@ -81,8 +95,6 @@ export class CompanyService {
                     }
                 // }
             }
-
-            console.log(companies)
 
             let startPage : PageLink
             let previousPage: PageLink
@@ -94,6 +106,18 @@ export class CompanyService {
                 route: route,
                 link: link
             }
+
+            const titleElem = await source.$('h1')
+            const title = await source.evaluate(
+                el => el.innerHTML, 
+                titleElem
+            )
+
+            const subtitleElem = await source.$('h2')
+            const subtitle = await source.evaluate(
+                el => el.innerHTML.trim(), 
+                subtitleElem
+            )
 
             const start = await source.$('#pagination-nav > div > a:nth-child(2)')
             if(start){
@@ -184,6 +208,8 @@ export class CompanyService {
             }
 
             page = {
+                title: title,
+                subtitle: subtitle,
                 companies: companies,
                 currentPage: currentPage,
                 startPage: startPage,
@@ -191,7 +217,6 @@ export class CompanyService {
                 nextPage: nextPage,
                 lastPage: lastPage,
             }
-            // console.log(page)
 
         } catch (error){
             console.log('Scrapping error: ', error)

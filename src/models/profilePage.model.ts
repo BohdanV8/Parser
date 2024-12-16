@@ -2,6 +2,9 @@ import { PageLink } from "./pageLink.model";
 import { Review } from "./review.model";
 
 export interface ProfilePage {
+    title: string,
+    // subtitle: string,
+    location: string,
     startPage: PageLink,
     previousPage: PageLink,
     currentPage: PageLink,

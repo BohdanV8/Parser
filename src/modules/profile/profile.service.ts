@@ -120,6 +120,24 @@ export class ReviewService {
                 link: url
             }
 
+            const titleElem = await source.$('website-link__item')
+            const title = await source.evaluate(
+                el => el.innerHTML.trim(), 
+                titleElem
+            )
+
+            // const subtitleElem = await source.$('directory2__facets-title')
+            // const subtitle = await source.evaluate(
+            //     el => el.innerHTML.trim(), 
+            //     subtitleElem
+            // )
+
+            const locElem = await source.$('.profile-summary__details > li:nth-child(4) > sg-text__title')
+            const loc = await source.evaluate(
+                el => el.innerHTML.trim(), 
+                locElem
+            )
+
             const start = await source.$('.sg-pagination__item > .sg-pagination__link--icon-first') 
             if(start){
                 const number = await source.evaluate(
@@ -183,22 +201,11 @@ export class ReviewService {
                     }
                 }
             }
-            // if(last){
-            //     const number = await source.evaluate(
-            //         el => Number(el.getAttribute('data-page').trim()), 
-            //         last
-            //     )
-            //     console.log(pageNumber, number)
-            //     if(number !== 0){
-            //         lastPage = {
-            //             number: number + 1,
-            //             route: route,
-            //             link: link + `?page=${number}`
-            //         }
-            //     }
-            // }
 
             page = {
+                title: title,
+                // subtitle: subtitle,
+                location: loc,
                 startPage: startPage,
                 previousPage: previousPage,
                 currentPage: currentPage,
