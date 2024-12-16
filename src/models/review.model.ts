@@ -1,5 +1,9 @@
 export interface Review{
     name: string
+    reviewerPerson: string
+    reviewerPosition: string
+    reviewerField: string
+    reviewerLocation: string
     projectSummary: string
     feedbackSummary: string
     reviewMark: number
@@ -7,5 +11,4 @@ export interface Review{
     scheduleMark: number
     costMark: number
     willingToReferMark: number
-    reviewerName: string
 }

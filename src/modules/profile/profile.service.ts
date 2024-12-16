@@ -6,16 +6,13 @@ import { PageLink } from 'src/models/pageLink.model';
 @Injectable()
 export class ReviewService {
     async getReviews(url: string): Promise<ProfilePage>{
+
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-        
-        const browser = await puppeteer.launch({ 
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-blink-features=AutomationControlled',
-            ],
+
+        puppeteer.use(StealthPlugin());
+
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
         })
             
         const source = await browser.newPage()
@@ -30,67 +27,83 @@ export class ReviewService {
 
         try {
 
-            puppeteer.use(StealthPlugin());
-
             await source.goto(fullLink)
             const reviewItems = await source.$$('#reviews-list > .profile-review')
 
             for(const reviewItem of reviewItems) {
                 const reviewName = await source.evaluate(
                     el => el.querySelector('.profile-review__header > h4')
-                        .innerHTML.trim().replaceAll('&amp;', '&'), 
+                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                     reviewItem
                 )
-                const reviewerName = await source.evaluate(
+                const reviewerPosition = await source.evaluate(
+                    el => el.querySelector('.reviewer_position')
+                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                    reviewItem
+                )
+                const reviewerPerson = await source.evaluate(
                     el => el.querySelector('.reviewer_card > .reviewer_card--name')
-                    .innerHTML.trim(), reviewItem
+                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                    reviewItem
+                )
+                const reviewerField = await source.evaluate(
+                    el => el.querySelector('div.profile-review__reviewer.mobile_hide > ul > li:nth-child(1) > span.reviewer_list__details-title.sg-text__title')
+                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                    reviewItem
+                )
+                const reviewerLoc = await source.evaluate(
+                    el => el.querySelector('div.profile-review__reviewer.mobile_hide > ul > li:nth-child(2) > span.reviewer_list__details-title.sg-text__title')
+                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                    reviewItem
                 )
                 const project = await source.evaluate(
                     el => el.querySelector('.profile-review__summary > p:nth-child(2)')
-                    .innerHTML.trim(), 
+                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                     reviewItem
                 )
                 const feedback = await source.evaluate(
                     el => el.querySelector('.profile-review__feedback > p:nth-child(2)')
-                        .innerHTML.trim(), 
+                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'),  
                     reviewItem
                 )
                 const summaryMark = await source.evaluate(
                     el => Number(
-                        el.querySelector('.sg-rating.profile-review__rating > .sg-rating__number')
-                        .innerHTML.trim()
+                        el.querySelector('.sg-rating.profile-review__rating > .sg-rating__number').innerHTML.trim()
                     ), reviewItem
                 )
                 const qualityMark = await source.evaluate(
                     el => Number(
                         el.querySelector('.profile-review__rating-metrics > dl:nth-child(1) > dd')
-                        .innerHTML.trim()
+                            .innerHTML.trim(),
                     ), reviewItem
                 )
                 const scheduleMark = await source.evaluate(
                     el => Number(
                         el.querySelector('.profile-review__rating-metrics > dl:nth-child(2) > dd')
-                        .innerHTML.trim()
+                            .innerHTML.trim(),
                     ), reviewItem
                 )
                 const costMark = await source.evaluate(el => Number(
                     el.querySelector('.profile-review__rating-metrics > dl:nth-child(3) > dd')
-                        .innerHTML.trim()
+                        .innerHTML.trim(),
                     ), reviewItem
                 )
                 const referMark = await source.evaluate(el => Number(
                     el.querySelector('.profile-review__rating-metrics > dl:nth-child(4) > dd')
-                        .innerHTML.trim()
+                        .innerHTML.trim(),
                     ), reviewItem
                 )
                 
-                // if(summaryMark < 4){
+                // if(summaryMark <= 4){
 
                     const review = {
-                        name : reviewName.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'),
-                        reviewerName : reviewerName.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'),
-                        projectSummary : project.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'),
-                        feedbackSummary : feedback.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&'),
+                        name : reviewName,
+                        reviewerPerson : reviewerPerson,
+                        reviewerPosition : reviewerPosition,
+                        reviewerField : reviewerField,
+                        reviewerLoc : reviewerLoc,
+                        projectSummary : project,
+                        feedbackSummary : feedback,
                         reviewMark : summaryMark,
                         costMark : costMark,
                         qualityMark : qualityMark,
@@ -120,21 +133,15 @@ export class ReviewService {
                 link: url
             }
 
-            const titleElem = await source.$('website-link__item')
+            const titleElem = await source.$('h1 > .website-link__item')
             const title = await source.evaluate(
-                el => el.innerHTML.trim(), 
+                el => el.innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                 titleElem
             )
 
-            // const subtitleElem = await source.$('directory2__facets-title')
-            // const subtitle = await source.evaluate(
-            //     el => el.innerHTML.trim(), 
-            //     subtitleElem
-            // )
-
-            const locElem = await source.$('.profile-summary__details > li:nth-child(4) > sg-text__title')
+            const locElem = await source.$('.profile-summary__details > li:nth-child(4) > .sg-text__title')
             const loc = await source.evaluate(
-                el => el.innerHTML.trim(), 
+                el => el.innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                 locElem
             )
 
@@ -144,7 +151,6 @@ export class ReviewService {
                     el => Number(el.getAttribute('data-page').trim()), 
                     start
                 )
-                console.log(number)
                 if(pageNumber !== number){
                     startPage = {
                         number: number + 1,
@@ -160,7 +166,6 @@ export class ReviewService {
                     el => Number(el.getAttribute('data-page').trim()), 
                     previous
                 ) - 1
-                console.log(number)
                 if(startPage.number !== number){
                     previousPage = {
                         number: number,
@@ -170,15 +175,12 @@ export class ReviewService {
                 }
             } 
 
-            console.log(pageNumber)
-
             const next = await source.$('.sg-pagination__item > .sg-pagination__link--icon-next')
             if(next){
                 const number = await source.evaluate(
                     el => Number(el.getAttribute('data-page').trim()), 
                     next
                 )
-                console.log(number)
                 nextPage = {
                     number: number + 1,
                     route: route,
@@ -192,7 +194,6 @@ export class ReviewService {
                     el => Number(el.getAttribute('data-page').trim()), 
                     last
                 )
-                console.log(number)
                 if(number !== nextPage.number){
                     lastPage = {
                         number: number,
@@ -204,7 +205,6 @@ export class ReviewService {
 
             page = {
                 title: title,
-                // subtitle: subtitle,
                 location: loc,
                 startPage: startPage,
                 previousPage: previousPage,

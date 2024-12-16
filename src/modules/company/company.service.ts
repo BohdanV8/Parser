@@ -19,18 +19,27 @@ export class CompanyService {
         }
 
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-        
-        const browser = await puppeteer.launch({ 
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-blink-features=AutomationControlled',
-            ],
+
+        puppeteer.use(StealthPlugin());
+
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
         })
-            
+        
         const source = await browser.newPage()
+        await source.setViewport({ width: 400, height: 200 })
+        await source.setRequestInterception(true)
+        source.on('request', (req) => {
+            const blockedResources = ['image', 'stylesheet', 'font']
+            if (blockedResources.includes(req.resourceType())) {
+                req.abort()
+            } else {
+                req.continue()
+            }
+        });
+        
+        await source.goto(url, { waitUntil: 'domcontentloaded' })
+        await source.waitForSelector('#providers__list', { timeout: 1000 })
 
         let companies: Company[] = []
 
@@ -43,13 +52,15 @@ export class CompanyService {
 
         try {
 
-            puppeteer.use(StealthPlugin());
-
             await source.goto(link)
 
-            const company_items = await source.$$('#providers__list > .provider-list-item')
+            const titleElem = await source.$('h1')
+            const title = await source.evaluate(
+                el => el.innerHTML, 
+                titleElem
+            )
 
-            console.log(company_items)
+            const company_items = await source.$$('#providers__list > .provider-list-item')
 
             for(const company_item of company_items){
                 const name = await source.evaluate(
@@ -58,7 +69,8 @@ export class CompanyService {
                     company_item
                 )
                 const profile = await source.evaluate(
-                    el => el.querySelector('h3 > a').getAttribute('href').trim(), 
+                    el => el.querySelector('h3 > a').getAttribute('href')
+                        .replaceAll('&nbsp;', '.').replaceAll('&amp;', '&').trim(), 
                     company_item
                 )
                 const mark = await source.evaluate(
@@ -76,8 +88,24 @@ export class CompanyService {
 
                 const field_items = await company_item.$$('.provider__services-list > .provider__services-list-item')
                 let fields = []
+
                 for(const field_item of field_items){
-                    const content = await source.evaluate(el => el.innerHTML.trim(), field_item)
+                    const span = await field_item.$('span');
+                    let content
+                    if(span){
+                        content = await field_item.evaluate(
+                            el => el.querySelector('span').innerHTML
+                                .replaceAll('&nbsp;', '.').replaceAll('&amp;', '&').trim(), 
+                            field_item
+                        )
+                    }
+                    else{
+                        content = await source.evaluate(
+                            el => el.innerHTML
+                                .replaceAll('&nbsp;', '.').replaceAll('&amp;', '&').trim(), 
+                            field_item
+                        )
+                    }
                     fields.push(content)
                 }
 
@@ -89,7 +117,7 @@ export class CompanyService {
                         profileLink : profile,
                         fields: fields,
                     }
-                    const twin_company = companies.find(a => a.name == company.name)
+                    const twin_company = companies.find(a => a == company)
                     if(!twin_company){
                         companies.push(company)
                     }
@@ -106,18 +134,6 @@ export class CompanyService {
                 route: route,
                 link: link
             }
-
-            const titleElem = await source.$('h1')
-            const title = await source.evaluate(
-                el => el.innerHTML, 
-                titleElem
-            )
-
-            const subtitleElem = await source.$('h2')
-            const subtitle = await source.evaluate(
-                el => el.innerHTML.trim(), 
-                subtitleElem
-            )
 
             const start = await source.$('#pagination-nav > div > a:nth-child(2)')
             if(start){
@@ -209,7 +225,6 @@ export class CompanyService {
 
             page = {
                 title: title,
-                subtitle: subtitle,
                 companies: companies,
                 currentPage: currentPage,
                 startPage: startPage,
@@ -224,6 +239,5 @@ export class CompanyService {
             await browser.close()
             return page
          }
-        
     }
 }
