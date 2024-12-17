@@ -80,11 +80,17 @@ export class CompanyService {
                     el => Number(el.querySelector('.provider__main-info > div > span').innerHTML.trim()), 
                     company_item
                 ) : 0
-                const loc = await source.evaluate(el => el
-                    .querySelector('.provider__highlights-item.sg-tooltip-v2.location > .locality')
-                    .innerHTML.trim(), 
+
+                const locItem = await source.evaluate(el => el
+                    .querySelector('.provider__highlights-item.sg-tooltip-v2.location > .locality'),
                     company_item
                 )
+                const loc = locItem 
+                    ? await source.evaluate(
+                        el => el.querySelector('.provider__highlights-item.sg-tooltip-v2.location > .locality')
+                            .innerHTML.trim(), 
+                        company_item) 
+                    : 'Undislocated'
 
                 const field_items = await company_item.$$('.provider__services-list > .provider__services-list-item')
                 let fields = []
