@@ -6,11 +6,21 @@ import { PageLink } from 'src/models/pageLink.model';
 
 @Injectable()
 export class CompanyService {
-    async getCompanies(url: string, pageNumber: number = 0): Promise<CompanyPage>{
+    async getCompanies(url: string, pageNumber: number = 0, mark: number): Promise<CompanyPage>{
+
+        if(url.includes('?mark=')){
+            const link = url.includes('?mark=') 
+                ? url.replace(/\?mark=\d+/, '')  
+                : url;
+
+            mark = url.includes('?mark=') 
+                ? Number(url.replace(link + '?mark=' , '')) 
+                : 0;
+        }
         
         if(url.includes('?page=')){
             const link = url.includes('?page=') 
-                ? url.replace(/\?page=\d+/, '') 
+                ? url.replace(/\?page=\d+/, '').replace(/\?mark=\d+/, '')  
                 : url;
 
             pageNumber = url.includes('?page=') 
@@ -73,7 +83,7 @@ export class CompanyService {
                         .replaceAll('&nbsp;', '.').replaceAll('&amp;', '&').trim(), 
                     company_item
                 )
-                const mark = await source.evaluate(
+                const companyMark = await source.evaluate(
                     el => el.querySelector('.provider__main-info > div > span'),
                     company_item
                 ) ? await source.evaluate(
@@ -115,9 +125,9 @@ export class CompanyService {
                     fields.push(content)
                 }
 
-                // if(summaryMark <= 4){
+                if(companyMark <= mark){
                     const company = {
-                        mark : mark,
+                        mark : companyMark,
                         name : name,
                         location: loc,
                         profileLink : profile,
@@ -127,7 +137,7 @@ export class CompanyService {
                     if(!twin_company){
                         companies.push(company)
                     }
-                // }
+                }
             }
 
             let startPage : PageLink
@@ -138,7 +148,7 @@ export class CompanyService {
             const currentPage = {
                 number: Number(pageNumber) + 1,
                 route: route,
-                link: link
+                link: link + `&mark=${mark}`
             }
 
             const start = await source.$('#pagination-nav > div > a:nth-child(2)')
@@ -155,7 +165,7 @@ export class CompanyService {
                     startPage = {
                         number: number + 1, 
                         route: route,
-                        link: `https://clutch.co${link}`
+                        link: `https://clutch.co${link}&mark=${mark}`
                     }
                 }
             }
@@ -176,7 +186,7 @@ export class CompanyService {
                     previousPage = {
                         number: number + 1, 
                         route: route,
-                        link: `https://clutch.co${link}`
+                        link: `https://clutch.co${link}&mark=${mark}`
                     }
                 }
             }
@@ -201,7 +211,7 @@ export class CompanyService {
                         nextPage = {
                             number: number + 1,
                             route: route,
-                            link: `https://clutch.co${link}`
+                            link: `https://clutch.co${link}&mark=${mark}`
                         }
                     }
                 }
@@ -224,7 +234,7 @@ export class CompanyService {
                     lastPage = {
                         number: number + 1,
                         route: route,
-                        link: `https://clutch.co${link}`
+                        link: `https://clutch.co${link}&mark=${mark}`
                     }
                 }
             }
