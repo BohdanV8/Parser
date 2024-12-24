@@ -27,7 +27,8 @@ export class ReviewService {
 
         try {
 
-            await source.goto(fullLink)
+            await source.goto(fullLink, { waitUntil: 'networkidle0' })
+            await source.waitForSelector('#reviews-list', { timeout: 1000 });
             const reviewItems = await source.$$('#reviews-list > .profile-review')
 
             for(const reviewItem of reviewItems) {
@@ -56,16 +57,20 @@ export class ReviewService {
                         .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                     reviewItem
                 )
-                const project = await source.evaluate(
-                    el => el.querySelector('.profile-review__summary > p:nth-child(2)')
-                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                const projectItem = await source.evaluate(el => 
+                    el.querySelector('.profile-review__summary > p:nth-child(2)'), 
                     reviewItem
+                ) ?? await source.evaluate(
+                    el => el.querySelector('.profile-review__summary > p.profile-review__text'), reviewItem
                 )
-                const feedback = await source.evaluate(
-                    el => el.querySelector('.profile-review__feedback > p:nth-child(2)')
-                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'),  
-                    reviewItem
+                const project = projectItem.innerHTML
+                
+                const feedbackItem = await source.evaluate(
+                    el => el.querySelector('.profile-review__feedback > p:nth-child(2)'), reviewItem
+                ) ?? await source.evaluate(
+                    el => el.querySelector('.profile-review__summary > p.profile-review__text'), reviewItem
                 )
+                const feedback = feedbackItem.innerHTML
                 const summaryMark = await source.evaluate(
                     el => Number(
                         el.querySelector('.sg-rating.profile-review__rating > .sg-rating__number').innerHTML.trim()
@@ -93,8 +98,6 @@ export class ReviewService {
                         .innerHTML.trim(),
                     ), reviewItem
                 )
-                
-                // if(summaryMark <= 4){
 
                     const review = {
                         name : reviewName,
@@ -111,7 +114,6 @@ export class ReviewService {
                         willingToReferMark : referMark,
                     }
                     reviews.push(review)
-                // }
             }
 
             let startPage: PageLink

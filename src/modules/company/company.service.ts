@@ -8,6 +8,8 @@ import { PageLink } from 'src/models/pageLink.model';
 export class CompanyService {
     async getCompanies(url: string, pageNumber: number = 0, mark: number): Promise<CompanyPage>{
 
+        console.log(url)
+
         if(url.includes('?mark=')){
             const link = url.includes('?mark=') 
                 ? url.replace(/\?mark=\d+/, '')  
@@ -27,6 +29,8 @@ export class CompanyService {
                 ? Number(url.replace(link + '?page=' , '')) 
                 : 0;
         }
+
+        console.log(url, mark, pageNumber)
 
         const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
@@ -56,7 +60,7 @@ export class CompanyService {
         let page: CompanyPage
 
         const link = pageNumber 
-            ? url + `&page=${pageNumber}`
+            ? url + `?page=${pageNumber}`
             : url
         const route = '/company'
 
@@ -73,9 +77,12 @@ export class CompanyService {
             const company_items = await source.$$('#providers__list > .provider-list-item')
 
             for(const company_item of company_items){
-                const name = await source.evaluate(
-                    el => el.querySelector('h3 > a').innerHTML
-                        .replaceAll('&nbsp;', '.').replaceAll('&amp;', '&').trim(), 
+                const name = await source.evaluate(el => el.querySelector('h3 > a')
+                    .innerHTML.replaceAll('&nbsp;', '.').replaceAll('&amp;', '&').trim(), 
+                    company_item
+                )
+                const website = await source.evaluate(el => el
+                    .querySelector('div > .provider__cta-container > .provider__cta-link.sg-button-v2.sg-button-v2--primary.website-link__item.website-link__item--non-ppc').getAttribute('href').trim(), 
                     company_item
                 )
                 const profile = await source.evaluate(
@@ -130,6 +137,7 @@ export class CompanyService {
                         mark : companyMark,
                         name : name,
                         location: loc,
+                        website: website,
                         profileLink : profile,
                         fields: fields,
                     }
