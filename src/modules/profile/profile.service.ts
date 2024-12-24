@@ -32,88 +32,80 @@ export class ReviewService {
             const reviewItems = await source.$$('#reviews-list > .profile-review')
 
             for(const reviewItem of reviewItems) {
-                const reviewName = await source.evaluate(
-                    el => el.querySelector('.profile-review__header > h4')
+                const reviewName = await source.evaluate(el => el.querySelector('.profile-review__header > h4')
+                    .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                    reviewItem
+                )
+                const reviewerPosition = await source.evaluate(el => el.querySelector('.reviewer_position')
                         .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                     reviewItem
                 )
-                const reviewerPosition = await source.evaluate(
-                    el => el.querySelector('.reviewer_position')
-                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                const reviewerPerson = await source.evaluate(el => el
+                    .querySelector('.reviewer_card > .reviewer_card--name').innerHTML.trim()
+                    .replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                     reviewItem
                 )
-                const reviewerPerson = await source.evaluate(
-                    el => el.querySelector('.reviewer_card > .reviewer_card--name')
-                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                const reviewerField = await source.evaluate(el => el
+                    .querySelector('div.profile-review__reviewer.mobile_hide > ul > li:nth-child(1) > span.reviewer_list__details-title.sg-text__title')
+                    .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                     reviewItem
                 )
-                const reviewerField = await source.evaluate(
-                    el => el.querySelector('div.profile-review__reviewer.mobile_hide > ul > li:nth-child(1) > span.reviewer_list__details-title.sg-text__title')
-                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                const reviewerLoc = await source.evaluate(el => el
+                    .querySelector('div.profile-review__reviewer.mobile_hide > ul > li:nth-child(2) > span.reviewer_list__details-title.sg-text__title')
+                    .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
                     reviewItem
                 )
-                const reviewerLoc = await source.evaluate(
-                    el => el.querySelector('div.profile-review__reviewer.mobile_hide > ul > li:nth-child(2) > span.reviewer_list__details-title.sg-text__title')
-                        .innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
-                    reviewItem
+
+                const projectItem = await reviewItem.$('div.profile-review__summary > p:nth-child(2)') ??
+                    await reviewItem.$('div.profile-review__summary > .profile-review__text')
+                const project = await source.evaluate(el => 
+                    el.innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                    projectItem
                 )
-                const projectItem = await source.evaluate(el => 
-                    el.querySelector('.profile-review__summary > p:nth-child(2)'), 
-                    reviewItem
-                ) ?? await source.evaluate(
-                    el => el.querySelector('.profile-review__summary > p.profile-review__text'), reviewItem
+
+                const feedbackItem = await reviewItem.$('div.profile-review__feedback > p:nth-child(2)') ??
+                    await reviewItem.$('div.profile-review__feedback > .profile-review__text')
+                const feedback = await source.evaluate(el => 
+                    el.innerHTML.trim().replaceAll('&amp;', '&').replaceAll('&nbsp;', '.'), 
+                    feedbackItem
                 )
-                const project = projectItem.innerHTML
                 
-                const feedbackItem = await source.evaluate(
-                    el => el.querySelector('.profile-review__feedback > p:nth-child(2)'), reviewItem
-                ) ?? await source.evaluate(
-                    el => el.querySelector('.profile-review__summary > p.profile-review__text'), reviewItem
-                )
-                const feedback = feedbackItem.innerHTML
-                const summaryMark = await source.evaluate(
-                    el => Number(
+                const summaryMark = await source.evaluate(el => Number(
                         el.querySelector('.sg-rating.profile-review__rating > .sg-rating__number').innerHTML.trim()
                     ), reviewItem
                 )
-                const qualityMark = await source.evaluate(
-                    el => Number(
-                        el.querySelector('.profile-review__rating-metrics > dl:nth-child(1) > dd')
-                            .innerHTML.trim(),
+                const qualityMark = await source.evaluate(el => Number(el
+                        .querySelector('.profile-review__rating-metrics > dl:nth-child(1) > dd').innerHTML.trim(),
                     ), reviewItem
                 )
-                const scheduleMark = await source.evaluate(
-                    el => Number(
-                        el.querySelector('.profile-review__rating-metrics > dl:nth-child(2) > dd')
-                            .innerHTML.trim(),
+                const scheduleMark = await source.evaluate(el => Number(
+                        el.querySelector('.profile-review__rating-metrics > dl:nth-child(2) > dd').innerHTML.trim(),
                     ), reviewItem
                 )
                 const costMark = await source.evaluate(el => Number(
-                    el.querySelector('.profile-review__rating-metrics > dl:nth-child(3) > dd')
-                        .innerHTML.trim(),
+                    el.querySelector('.profile-review__rating-metrics > dl:nth-child(3) > dd').innerHTML.trim(),
                     ), reviewItem
                 )
                 const referMark = await source.evaluate(el => Number(
-                    el.querySelector('.profile-review__rating-metrics > dl:nth-child(4) > dd')
-                        .innerHTML.trim(),
+                    el.querySelector('.profile-review__rating-metrics > dl:nth-child(4) > dd').innerHTML.trim(),
                     ), reviewItem
                 )
 
-                    const review = {
-                        name : reviewName,
-                        reviewerPerson : reviewerPerson,
-                        reviewerPosition : reviewerPosition,
-                        reviewerField : reviewerField,
-                        reviewerLoc : reviewerLoc,
-                        projectSummary : project,
-                        feedbackSummary : feedback,
-                        reviewMark : summaryMark,
-                        costMark : costMark,
-                        qualityMark : qualityMark,
-                        scheduleMark : scheduleMark,
-                        willingToReferMark : referMark,
-                    }
-                    reviews.push(review)
+                const review = {
+                    name : reviewName,
+                    reviewerPerson : reviewerPerson,
+                    reviewerPosition : reviewerPosition,
+                    reviewerField : reviewerField,
+                    reviewerLoc : reviewerLoc,
+                    projectSummary : project,
+                    feedbackSummary : feedback,
+                    reviewMark : summaryMark,
+                    costMark : costMark,
+                    qualityMark : qualityMark,
+                    scheduleMark : scheduleMark,
+                    willingToReferMark : referMark,
+                }
+                reviews.push(review)
             }
 
             let startPage: PageLink
