@@ -28,7 +28,6 @@ export class ReviewService {
         try {
 
             await source.goto(fullLink, { waitUntil: 'networkidle0' })
-            await source.waitForSelector('#reviews-list', { timeout: 1000 });
             const reviewItems = await source.$$('#reviews-list > .profile-review')
 
             for(const reviewItem of reviewItems) {
